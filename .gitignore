@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -22,3 +23,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+=======
+node_modules
+serviceAccountKey.json
+.env
+>>>>>>> 3b1ee294152e672b9d2df2f13d90262ef470e526
