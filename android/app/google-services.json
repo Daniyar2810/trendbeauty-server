@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "215792460326",
+    "project_id": "trend-beauty-57cf2",
+    "storage_bucket": "trend-beauty-57cf2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215792460326:android:751e60af971bfdd85c3ce7",
+        "android_client_info": {
+          "package_name": "com.trenbeauty.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeEo1fdwKP-iUzMWJqLsDdDtJBe8XBMYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215792460326:android:3748082f43e2d9545c3ce7",
+        "android_client_info": {
+          "package_name": "com.trendbeauty.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeEo1fdwKP-iUzMWJqLsDdDtJBe8XBMYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

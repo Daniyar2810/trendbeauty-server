@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">trend-beauty-admin</string>
+    <string name="title_activity_main">trend-beauty-admin</string>
+    <string name="package_name">com.trenbeauty.app</string>
+    <string name="custom_url_scheme">com.trenbeauty.app</string>
+</resources>

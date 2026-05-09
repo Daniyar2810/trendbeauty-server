@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+	<link rel="manifest" href="manifest.json">
+
+	<meta name="theme-color" content="#000000">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Güzellik Merkezi Yönetim Sistemi</title>
+	<!-- Tailwind CSS -->
+	<script src="https://cdn.tailwindcss.com"></script>
+	<!-- Phosphor Icons -->
+	<script src="https://unpkg.com/@phosphor-icons/web"></script>
+	<style>
+		.hidden-view {
+			display: none !important;
+		}
+
+		#modal-overlay {
+			transition: opacity 0.3s ease;
+		}
+		/* Scrollbar styling */
+		::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: #f1f1f1;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: #fda4af;
+			border-radius: 10px;
+		}
+
+			::-webkit-scrollbar-thumb:hover {
+				background: #f43f5e;
+			}
+	</style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800 antialiased h-screen flex flex-col">
+
+	<!-- ========================================== -->
+	<!-- GÖRÜNÜM 1: ADMİN GİRİŞ (VARSAYILAN AÇILIŞ) -->
+	<!-- ========================================== -->
+	<div id="view-admin-login" class="flex-1 bg-rose-50 flex items-center justify-center p-4">
+		<div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-rose-100">
+			<div class="text-center mb-8">
+				<div class="inline-flex items-center justify-center w-16 h-16 bg-rose-100 rounded-full mb-4">
+					<i class="ph ph-lock-key text-3xl text-rose-600"></i>
+				</div>
+				<h2 class="text-2xl font-bold text-gray-800">Yönetici Girişi</h2>
+				<p class="text-gray-500 text-sm mt-1">Lütfen panel erişimi için kimlik bilgilerinizi girin.</p>
+			</div>
+
+			<form onsubmit="handleAdminLogin(event)" class="space-y-5">
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Adı</label>
+					<div class="relative">
+						<i class="ph ph-user absolute left-3 top-3 text-gray-400"></i>
+						<input type="text" id="login-username" required value="admin" class="w-full border border-gray-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-rose-500 outline-none bg-gray-50 transition" placeholder="admin">
+					</div>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+					<div class="relative">
+						<i class="ph ph-password absolute left-3 top-3 text-gray-400"></i>
+						<input type="password" id="login-password" value="123" required class="w-full border border-gray-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-rose-500 outline-none bg-gray-50 transition" placeholder="123">
+					</div>
+				</div>
+
+				<div class="bg-rose-50 border border-rose-100 p-3 rounded-lg text-center">
+					<p class="text-xs text-rose-700 font-medium">Demo Giriş Bilgileri:</p>
+					<p class="text-xs text-rose-600">Kullanıcı: <span class="font-bold">admin</span> / Şifre: <span class="font-bold">123</span></p>
+				</div>
+
+				<button type="submit" class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold hover:bg-rose-700 transform active:scale-95 transition shadow-lg shadow-rose-200">Sisteme Giriş Yap</button>
+			</form>
+
+			<div class="mt-8 pt-6 border-t border-gray-100 text-center">
+				<button onclick="switchView('customer')" class="text-sm text-gray-400 hover:text-rose-600 transition flex items-center justify-center gap-2 mx-auto">
+					<i class="ph ph-browser"></i> Müşteri Sayfasına Göz At
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- ========================================== -->
+	<!-- GÖRÜNÜM 2: ADMİN DASHBOARD -->
+	<!-- ========================================== -->
+	<div id="view-admin-dashboard" class="hidden-view flex-1 flex flex-col h-full bg-gray-50">
+		<!-- Topbar -->
+		<header class="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex flex-col md:flex-row gap-4 md:gap-0 justify-between md:items-center shrink-0 shadow-sm">
+			<div class="flex items-center gap-2">
+				<i class="ph ph-scissors text-rose-600 text-3xl"></i>
+				<div>
+					<h1 class="font-bold text-lg text-gray-800 leading-tight">Güzellik Merkezi</h1>
+					<p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest">Yönetim Paneli</p>
+				</div>
+			</div>
+			<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 w-full md:w-auto">
+				<button onclick="switchView('customer')" class="text-sm font-medium text-gray-500 hover:text-rose-600 transition px-3 py-2">
+					Siteyi Görüntüle
+				</button>
+				<button onclick="logout()" class="flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600 px-4 py-2 rounded-lg transition font-semibold text-sm">
+					<i class="ph ph-sign-out"></i> Güvenli Çıkış
+				</button>
+			</div>
+		</header>
+		<div class="md:hidden bg-white border-b border-gray-200 p-2 flex gap-2 overflow-x-auto">
+
+			<button onclick="switchAdminTab('appointments')"
+					class="whitespace-nowrap px-4 py-2 rounded-xl bg-rose-50 text-rose-600 font-semibold text-sm">
+
+				Randevular
+
+			</button>
+
+			<button onclick="switchAdminTab('services')"
+					class="whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm">
+
+				Hizmetler
+
+			</button>
+
+			<button onclick="switchAdminTab('employees')"
+					class="whitespace-nowrap px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm">
+
+				Uzmanlar
+
+			</button>
+
+		</div>
+		<div class="flex flex-1 overflow-hidden">
+			<!-- Sidebar -->
+			<aside class="hidden md:flex w-64 bg-white border-r border-gray-200 p-4 flex-col gap-2 shrink-0">
+				<button onclick="switchAdminTab('appointments')" id="tab-btn-appointments" class="flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold text-rose-600 bg-rose-50 transition border border-transparent">
+					<i class="ph ph-calendar-check text-xl"></i> Randevular
+				</button>
+				<button onclick="switchAdminTab('services')" id="tab-btn-services" class="flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold text-gray-500 hover:bg-gray-50 transition border border-transparent">
+					<i class="ph ph-list-dashes text-xl"></i> Hizmet Menüsü
+				</button>
+				<button onclick="switchAdminTab('employees')" id="tab-btn-employees" class="flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold text-gray-500 hover:bg-gray-50 transition border border-transparent">
+					<i class="ph ph-users-three text-xl"></i> Uzman Kadrosu
+				</button>
+
+				<div class="mt-auto p-4 bg-gray-50 rounded-xl">
+					<p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Sistem Durumu</p>
+					<div class="flex items-center gap-2 text-xs text-green-600 font-medium">
+						<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Çevrimiçi Veritabanı
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content -->
+			<main class="flex-1 p-3 md:p-6 overflow-y-auto">
+
+				<!-- SEKME: RANDEVULAR -->
+				<div id="tab-appointments" class="block">
+					<div class="flex justify-between items-end mb-6">
+						<div>
+							<h2 class="text-2xl font-extrabold text-gray-800">Randevu Takvimi</h2>
+							<p class="text-gray-500 text-sm">Gelecek randevuları ve müşteri taleplerini izleyin.</p>
+						</div>
+					</div>
+					<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+						<div class="overflow-x-auto">
+							<table class="w-full text-left border-collapse">
+								<thead>
+									<tr class="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-200">
+										<th class="p-4 font-bold">Müşteri Bilgisi</th>
+										<th class="p-4 font-bold">Hizmet & Uzman</th>
+										<th class="p-4 font-bold">Zamanlama</th>
+										<th class="p-4 font-bold">Tutar</th>
+										<th class="p-4 font-bold">Durum</th>
+										<th class="p-4 font-bold text-right">İşlem</th>
+									</tr>
+								</thead>
+								<tbody id="table-body-appointments" class="divide-y divide-gray-100 text-sm text-gray-700">
+									<!-- JS Content -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+
+				<!-- SEKME: HİZMETLER -->
+				<div id="tab-services" class="hidden-view">
+					<div class="flex justify-between items-center mb-6">
+						<div>
+							<h2 class="text-2xl font-extrabold text-gray-800">Hizmet Yönetimi</h2>
+							<p class="text-gray-500 text-sm">Fiyatlandırma ve süre bilgilerini güncelleyin.</p>
+						</div>
+						<button onclick="openModal('service')" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition flex items-center gap-2 shadow-lg">
+							<i class="ph ph-plus-circle font-bold"></i> Hizmet Ekle
+						</button>
+					</div>
+					<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+						<table class="w-full text-left border-collapse">
+							<thead>
+								<tr class="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-200">
+									<th class="p-4 font-bold">Hizmet Adı</th>
+									<th class="p-4 font-bold">Süre</th>
+									<th class="p-4 font-bold">Ücret</th>
+									<th class="p-4 font-bold text-right">İşlem</th>
+								</tr>
+							</thead>
+							<tbody id="table-body-services" class="divide-y divide-gray-100 text-sm text-gray-700">
+								<!-- JS Content -->
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- SEKME: ÇALIŞANLAR -->
+				<div id="tab-employees" class="hidden-view">
+					<div class="flex justify-between items-center mb-6">
+						<div>
+							<h2 class="text-2xl font-extrabold text-gray-800">Uzman Portföyü</h2>
+							<p class="text-gray-500 text-sm">Merkez kadrosundaki çalışanları yönetin.</p>
+						</div>
+						<button onclick="openModal('employee')" class="bg-gray-900 text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition flex items-center gap-2 shadow-lg">
+							<i class="ph ph-plus-circle font-bold"></i> Uzman Ekle
+						</button>
+					</div>
+					<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+						<table class="w-full text-left border-collapse">
+							<thead>
+								<tr class="bg-gray-50/50 text-gray-500 text-[11px] uppercase tracking-wider border-b border-gray-200">
+									<th class="p-4 font-bold">Uzman Adı</th>
+									<th class="p-4 font-bold">İletişim</th>
+									<th class="p-4 font-bold text-right">İşlem</th>
+								</tr>
+							</thead>
+							<tbody id="table-body-employees" class="divide-y divide-gray-100 text-sm text-gray-700">
+								<!-- JS Content -->
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+			</main>
+		</div>
+	</div>
+
+	<!-- ========================================== -->
+	<!-- GÖRÜNÜM 3: MÜŞTERİ EKRANI (RANDUVU FORMU) -->
+	<!-- ========================================== -->
+	<div id="view-customer" class="hidden-view flex-1 overflow-y-auto bg-rose-50 pb-20">
+		<nav class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
+			<div class="flex items-center gap-2">
+				<i class="ph ph-scissors text-3xl text-rose-500"></i>
+				<h1 class="text-2xl font-bold text-rose-600 tracking-tight">Güzellik<span class="text-gray-800">Merkezi</span></h1>
+			</div>
+			<button onclick="switchView('admin-login')" class="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-rose-600 transition border border-gray-200 px-4 py-2 rounded-full">
+				<i class="ph ph-shield"></i> Yönetici Girişi
+			</button>
+		</nav>
+
+		<section class="max-w-3xl mx-auto px-4 mt-12">
+			<div class="bg-white rounded-3xl shadow-xl p-8 border border-rose-100">
+				<div class="text-center mb-10">
+					<h2 class="text-3xl font-extrabold text-gray-900 mb-2">Hemen Randevu Alın</h2>
+					<p class="text-gray-500">Formu doldurarak dilediğiniz hizmeti ve uzmanı seçebilirsiniz.</p>
+				</div>
+
+				<div id="booking-success" class="hidden-view mb-8 bg-green-50 text-green-700 p-4 rounded-2xl border border-green-200 flex items-center gap-4 animate-bounce">
+					<i class="ph ph-check-circle text-3xl"></i>
+					<div>
+						<p class="font-bold text-lg">Talebiniz Alındı!</p>
+						<p class="text-sm">Yöneticilerimiz onayladığında size dönüş yapacaklar.</p>
+					</div>
+				</div>
+
+				<form id="form-booking" onsubmit="handleBookingSubmit(event)" class="space-y-6">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="space-y-4">
+							<div>
+								<label class="block text-xs font-bold text-gray-400 uppercase mb-2">Ad Soyad</label>
+								<input type="text" id="b-name" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition" placeholder="Adınız Soyadınız">
+							</div>
+							<div>
+								<label class="block text-xs font-bold text-gray-400 uppercase mb-2">Telefon No</label>
+								<input type="tel" id="b-phone" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition" placeholder="05XX XXX XX XX">
+							</div>
+						</div>
+						<div class="space-y-4">
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tarih</label>
+									<input type="date" id="b-date" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition">
+								</div>
+								<div>
+									<label class="block text-xs font-bold text-gray-400 uppercase mb-2">Saat</label>
+									<input type="time" id="b-time" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition">
+								</div>
+							</div>
+							<div>
+								<label class="block text-xs font-bold text-gray-400 uppercase mb-2">İşlem Seçimi</label>
+								<select id="b-service" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition">
+									<option value="">İşlem seçiniz...</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<div class="pt-4">
+						<label class="block text-xs font-bold text-gray-400 uppercase mb-2">Uzman Seçimi</label>
+						<select id="b-employee" required class="w-full bg-gray-50 border-0 rounded-xl p-4 focus:ring-2 focus:ring-rose-500 outline-none transition">
+							<option value="">Uzman seçiniz...</option>
+						</select>
+					</div>
+
+					<button type="submit" class="w-full bg-rose-600 text-white py-5 rounded-2xl font-bold text-lg hover:bg-rose-700 transition shadow-xl shadow-rose-200 active:scale-[0.98] transform">
+						Randevuyu Onaya Gönder
+					</button>
+				</form>
+			</div>
+		</section>
+	</div>
+
+	<!-- ========================================== -->
+	<!-- ORTAK MODAL -->
+	<!-- ========================================== -->
+	<div id="modal-overlay" class="hidden-view fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+		<div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+			<div class="flex justify-between items-center p-6 border-b border-gray-50">
+				<h3 id="modal-title" class="text-xl font-extrabold text-gray-800 tracking-tight">Düzenle</h3>
+				<button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-rose-100 hover:text-rose-600 transition">
+					<i class="ph ph-x text-xl"></i>
+				</button>
+			</div>
+			<div class="p-6">
+				<form id="modal-form" onsubmit="handleModalSubmit(event)" class="space-y-4">
+					<div id="modal-dynamic-content" class="space-y-4"></div>
+
+					<div class="pt-6 flex justify-end gap-3">
+						<button type="button" onclick="closeModal()" class="px-5 py-2.5 text-gray-500 font-bold hover:text-gray-800 transition">Vazgeç</button>
+						<button type="submit" class="px-8 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition font-bold shadow-lg shadow-rose-100">Kaydet</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- ========================================== -->
+	<!-- JS: UYGULAMA MANTIĞI -->
+	<!-- ========================================== -->
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+	<script>
+        let services = [];
+
+        let employees = [];
+
+        let appointments = [];
+        let currentModalType = '';
+
+        let editingId = null;
+		const SUPABASE_URL = "https://ougzcgwrrkktthfitzws.supabase.co";
+
+        const SUPABASE_KEY = "sb_publishable_aUdLPijRw2XTLf-z4SMT2w_g-Dk_aCz";
+
+        const supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+		);
+        async function loadDatabase() {
+
+            // SERVICES
+            const { data: servicesData } =
+                await supabaseClient
+                    .from("services")
+                    .select("*");
+
+            services = servicesData || [];
+
+            // EMPLOYEES
+            const { data: employeesData } =
+                await supabaseClient
+                    .from("employees")
+                    .select("*");
+
+            employees = employeesData || [];
+
+            // APPOINTMENTS
+            const { data: appointmentsData } =
+                await supabaseClient
+                    .from("appointments")
+                    .select("*");
+
+            appointments = appointmentsData || [];
+
+            // render
+            renderAdminTables();
+
+            populateBookingSelects();
+        }
+		// Görünüm Değiştirme
+		function switchView(viewName) {
+			document.getElementById('view-admin-login').classList.add('hidden-view');
+			document.getElementById('view-admin-dashboard').classList.add('hidden-view');
+			document.getElementById('view-customer').classList.add('hidden-view');
+
+			const target = document.getElementById(`view-${viewName}`);
+			target.classList.remove('hidden-view');
+
+			if (viewName === 'admin-dashboard') renderAdminTables();
+			if (viewName === 'customer') populateBookingSelects();
+		}
+
+		function switchAdminTab(tabName) {
+			document.getElementById('tab-appointments').classList.add('hidden-view');
+			document.getElementById('tab-services').classList.add('hidden-view');
+			document.getElementById('tab-employees').classList.add('hidden-view');
+			document.getElementById(`tab-${tabName}`).classList.remove('hidden-view');
+
+			['appointments', 'services', 'employees'].forEach(btn => {
+				const el = document.getElementById(`tab-btn-${btn}`);
+				if (btn === tabName) {
+					el.className = "flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold text-rose-600 bg-rose-50 transition border border-rose-100";
+				} else {
+					el.className = "flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold text-gray-500 hover:bg-gray-50 transition border border-transparent";
+				}
+			});
+		}
+
+		// Login
+		function handleAdminLogin(e) {
+			e.preventDefault();
+			const u = document.getElementById('login-username').value;
+			const p = document.getElementById('login-password').value;
+			if (u === 'admin' && p === '123') {
+				switchView('admin-dashboard');
+			} else {
+				alert('Giriş başarısız! Bilgileri kontrol edin.');
+			}
+		}
+
+		function logout() {
+			switchView('admin-login');
+		}
+
+		// Render Fonksiyonları
+		function renderAdminTables() {
+			renderAppointments();
+			renderServices();
+			renderEmployees();
+		}
+
+		function renderAppointments() {
+			const list = [...appointments].sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));
+			document.getElementById('table-body-appointments').innerHTML = list.map(app => {
+				const s = services.find(x => x.id === app.service_id)?.title || '-';
+				const e = employees.find(x => x.id === app.employee_id)?.full_name || '-';
+				const stClass = app.status === 'Onaylandı' ? 'bg-green-100 text-green-700' : (app.status === 'İptal' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700');
+				return `
+					<tr class="hover:bg-gray-50/50">
+						<td class="p-4">
+							<div class="font-bold text-gray-900">${app.customer_name}</div>
+							<div class="text-[11px] text-gray-400 font-medium tracking-wide">${app.customer_phone}</div>
+						</td>
+						<td class="p-4">
+							<div class="font-semibold text-rose-600">${s}</div>
+							<div class="text-[11px] text-gray-500 uppercase">${e}</div>
+						</td>
+						<td class="p-4">
+							<div class="font-medium text-gray-800">${app.appointment_date}</div>
+							<div class="text-xs text-gray-400">${app.start_time} - ${app.end_time}</div>
+						</td>
+						<td class="p-4 font-bold text-gray-900">${app.total_price} ₺</td>
+						<td class="p-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${stClass}">${app.status}</span></td>
+						<td class="p-4 text-right">
+							<button onclick="openModal('appointment', '${app.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="ph ph-note-pencil text-lg"></i></button>
+							<button onclick="deleteItem('appointment', '${app.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i class="ph ph-trash text-lg"></i></button>
+						</td>
+					</tr>`;
+			}).join('');
+		}
+
+		function renderServices() {
+			document.getElementById('table-body-services').innerHTML = services.map(s => `
+					<tr class="hover:bg-gray-50/50">
+						<td class="p-4 font-bold text-gray-800">${s.title}</td>
+						<td class="p-4 text-gray-500 font-medium">${s.duration_minutes} Dakika</td>
+						<td class="p-4 font-extrabold text-gray-900 text-lg">${s.price} ₺</td>
+						<td class="p-4 text-right">
+							<button onclick="openModal('service', '${s.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="ph ph-pencil-simple text-lg"></i></button>
+							<button onclick="deleteItem('service', '${s.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i class="ph ph-trash text-lg"></i></button>
+						</td>
+					</tr>`).join('');
+		}
+
+		function renderEmployees() {
+			document.getElementById('table-body-employees').innerHTML = employees.map(e => `
+					<tr class="hover:bg-gray-50/50">
+						<td class="p-4 font-bold text-gray-800 text-base">${e.full_name}</td>
+						<td class="p-4 text-gray-500 font-medium">${e.phone}</td>
+						<td class="p-4 text-right">
+							<button onclick="openModal('employee', '${e.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><i class="ph ph-pencil-simple text-lg"></i></button>
+							<button onclick="deleteItem('employee', '${e.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg"><i class="ph ph-trash text-lg"></i></button>
+						</td>
+					</tr>`).join('');
+		}
+
+		// Müşteri Formu Doldurma
+		function populateBookingSelects() {
+			document.getElementById('b-service').innerHTML = '<option value="">İşlem seçiniz...</option>' +
+				services.map(s => `<option value="${s.id}">${s.title} (${s.price} ₺)</option>`).join('');
+			document.getElementById('b-employee').innerHTML = '<option value="">Uzman seçiniz...</option>' +
+				employees.map(e => `<option value="${e.id}">${e.full_name}</option>`).join('');
+		}
+
+		function handleBookingSubmit(e) {
+			e.preventDefault();
+			const sid = parseInt(document.getElementById('b-service').value);
+			const s = services.find(x => x.id === sid);
+			const start = document.getElementById('b-time').value;
+
+			// Bitiş hesaplama
+			const [h, m] = start.split(':').map(Number);
+			const date = new Date();
+			date.setHours(h, m + s.duration_minutes);
+			const end = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+			appointments.push({
+				id: Date.now(),
+				customer_name: document.getElementById('b-name').value,
+				customer_phone: document.getElementById('b-phone').value,
+				employee_id: parseInt(document.getElementById('b-employee').value),
+				service_id: sid,
+				appointment_date: document.getElementById('b-date').value,
+				start_time: start,
+				end_time: end,
+				total_price: s.price,
+				status: 'Bekliyor'
+			});
+
+			document.getElementById('form-booking').reset();
+			const win = document.getElementById('booking-success');
+			win.classList.remove('hidden-view');
+			setTimeout(() => win.classList.add('hidden-view'), 4000);
+		}
+
+		// Modal Mantığı
+        function openModal(type, id = null) {
+
+
+
+            currentModalType = type;
+
+            editingId = id;
+
+            const content =
+                document.getElementById(
+                    'modal-dynamic-content'
+                );
+
+            const item = id
+                ? (
+                    type === 'service'
+                        ? services.find(x => x.id === id)
+                        : (
+                            type === 'employee'
+                                ? employees.find(x => x.id === id)
+                                : appointments.find(x => x.id === id)
+                        )
+                )
+                : null;
+
+            if (type === 'service') {
+
+                content.innerHTML = `
+            <input type="text"
+                id="m-s-title"
+                placeholder="Hizmet Adı"
+                value="${item ? item.title : ''}"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+
+            <input type="number"
+                id="m-s-duration"
+                placeholder="Süre (Dakika)"
+                value="${item ? item.duration_minutes : ''}"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+
+            <input type="number"
+                id="m-s-price"
+                placeholder="Fiyat"
+                value="${item ? item.price : ''}"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+        `;
+            }
+
+            else if (type === 'employee') {
+
+                content.innerHTML = `
+            <input type="text"
+                id="m-e-name"
+                placeholder="Uzman Ad Soyad"
+                value="${item ? item.full_name : ''}"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+
+            <input type="text"
+                id="m-e-phone"
+                placeholder="Telefon"
+                value="${item ? item.phone : ''}"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+        `;
+            }
+
+            else if (type === 'appointment') {
+
+                content.innerHTML = `
+            <div class="p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-2">
+
+                <p class="font-bold text-gray-800">
+                    ${item.customer_name}
+                </p>
+
+                <p class="text-xs text-rose-600">
+                    ${item.appointment_date}
+                    |
+                    ${item.start_time}
+                </p>
+
+            </div>
+
+            <select id="m-a-status"
+                class="w-full bg-gray-100 p-3 rounded-xl outline-none">
+
+                <option value="Bekliyor"
+                    ${item.status === 'Bekliyor' ? 'selected' : ''}>
+                    Bekliyor
+                </option>
+
+                <option value="Onaylandı"
+                    ${item.status === 'Onaylandı' ? 'selected' : ''}>
+                    Onaylandı
+                </option>
+				                <option value="İptal"
+                    ${item.status === 'İptal' ? 'selected' : ''}>
+                    İptal
+                </option>
+
+            </select>
+        `;
+            }
+
+            // MODAL AÇ
+            document
+                .getElementById('modal-overlay')
+                .classList.remove('hidden-view');
+        }
+
+		function closeModal() { document.getElementById('modal-overlay').classList.add('hidden-view'); }
+
+        async function handleModalSubmit(e) {
+
+            e.preventDefault();
+
+            // SERVICE
+            if (currentModalType === 'service') {
+
+                const data = {
+
+                    title:
+                        document.getElementById('m-s-title').value,
+
+                    duration_minutes:
+                        parseInt(
+                            document.getElementById('m-s-duration').value
+                        ),
+
+                    price:
+                        parseInt(
+                            document.getElementById('m-s-price').value
+                        )
+                };
+
+                // UPDATE
+                if (editingId) {
+
+                    await supabaseClient
+                        .from("services")
+                        .update(data)
+                        .eq("id", editingId);
+
+                } else {
+
+                    // INSERT
+                    await supabaseClient
+                        .from("services")
+                        .insert([data]);
+                }
+            }
+
+            // EMPLOYEE
+            else if (currentModalType === 'employee') {
+
+                const data = {
+
+                    full_name:
+                        document.getElementById('m-e-name').value,
+
+                    phone:
+                        document.getElementById('m-e-phone').value
+                };
+
+                if (editingId) {
+
+                    await supabaseClient
+                        .from("employees")
+                        .update(data)
+                        .eq("id", editingId);
+
+                } else {
+
+                    await supabaseClient
+                        .from("employees")
+                        .insert([data]);
+                }
+            }
+
+            // APPOINTMENT
+            else if (currentModalType === 'appointment') {
+
+                await supabaseClient
+                    .from("appointments")
+                    .update({
+                        status:
+                            document.getElementById('m-a-status').value
+                    })
+                    .eq("id", editingId);
+            }
+
+            // tekrar yükle
+            await loadDatabase();
+
+            renderAdminTables();
+
+            closeModal();
+        }
+
+
+            async function deleteItem(type, id) {
+                console.log(type, id);
+                if (!confirm('Emin misiniz?')) return;
+
+
+                // tablo adı
+                let tableName = "";
+
+                if (type === "service") {
+                    tableName = "services";
+                }
+
+                if (type === "employee") {
+                    tableName = "employees";
+                }
+
+                if (type === "appointment") {
+                    tableName = "appointments";
+                }
+
+                // DATABASE'DEN SİL
+                const { error } =
+                    await supabaseClient
+                        .from(tableName)
+                        .delete()
+                        .eq("id", id);
+
+                if (error) {
+
+                    console.log(error);
+
+                    alert("Silinemedi");
+
+                    return;
+                }
+
+                // yeniden yükle
+                loadDatabase();
+            }
+        window.openModal = openModal;
+
+        window.closeModal = closeModal;
+
+        window.deleteItem = deleteItem;
+
+        window.handleModalSubmit =
+            handleModalSubmit;
+        loadDatabase();
+
+	</script>
+	<script>
+
+if ("serviceWorker" in navigator) {
+
+    navigator.serviceWorker
+        .register("./service-worker.js")
+        .then(() => {
+
+            console.log(
+                "Service Worker aktif"
+            );
+        });
+}
+
+	</script>
+</body>
+</html>
