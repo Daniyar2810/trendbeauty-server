@@ -1,6 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
 import { PushNotifications } from '@capacitor/push-notifications'
-import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 
 import { supabase } from './lib/supabase'
 
@@ -46,48 +45,58 @@ export default function App() {
                     'PUSH REGISTER OK'
                 )
 
-                // TOKEN AL
-                const result =
-                    await FirebaseMessaging.getToken()
+                PushNotifications.addListener(
+                    'registration',
+                    async (token) => {
 
-                console.log(
-                    'FCM TOKEN:',
-                    result.token
-                )
+                        console.log(
+                            'REGISTER TOKEN:',
+                            token.value
+                        )
 
-                try {
+                        try {
 
-                    console.log('FETCH BAŞLIYOR')
+                            console.log('FETCH BAŞLIYOR')
 
-                    const response = await fetch(
-                        'https://trendbeauty-server.onrender.com/save-token',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                token: result.token,
-                            }),
+                            const response = await fetch(
+                                'https://trendbeauty-server.onrender.com/save-token',
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        token: token.value,
+                                    }),
+                                }
+                            )
+
+                            console.log('FETCH BİTTİ')
+
+                            const text =
+                                await response.text()
+
+                            console.log(
+                                'RAW RESPONSE:',
+                                text
+                            )
+
+                            console.log(
+                                'STATUS:',
+                                response.status
+                            )
+
+                        } catch (err) {
+
+                            console.log(
+                                'FETCH HATASI:',
+                                err
+                            )
+
                         }
-                    )
 
-                    console.log('FETCH BİTTİ')
-
-                    const text = await response.text()
-
-                    console.log('RAW RESPONSE:', text)
-                    console.log('STATUS:', response.status)
-
-                } catch (err) {
-
-                    console.log(
-                        'FETCH HATASI:',
-                        JSON.stringify(err)
-                    )
-
-                    console.log(err)
-                }
+                    }
+                )
 
                 // PUSH GELDİ
                 await PushNotifications.addListener(
