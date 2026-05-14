@@ -32,19 +32,18 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        // Render/Linux için kritik sandbox ayarları
         args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-accelerated-2d-canvas",
-            "--no-first-run",
-            "--no-zygote",
-            "--disable-gpu"
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage', // Docker/Render için kritik
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process', // RAM tasarrufu sağlar
+            '--disable-gpu'
         ],
     }
 });
-
 client.on("qr", (qr) => {
     console.log("---------------------------------------");
     console.log("WHATSAPP QR KODU (Telefonuna okut):");
