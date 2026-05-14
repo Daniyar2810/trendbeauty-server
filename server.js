@@ -1,5 +1,5 @@
 
-import qrcode from "qrcode-terminal";
+
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -26,7 +26,7 @@ admin.initializeApp({
 const app = express();
 app.use(cors());
 app.use(express.json());
-import pkg from "whatsapp-web.js";
+/*import pkg from "whatsapp-web.js";
 
 const {
     Client,
@@ -34,12 +34,15 @@ const {
 } = pkg;
 // WHATSAPP CLIENT
 const client = new Client({
-
-    authStrategy:
-        new LocalAuth()
-
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
+    }
 });
-
 // QR
 client.on("qr", (qr) => {
 
@@ -105,6 +108,7 @@ app.post(
 
     }
 );
+*/
 app.post(
     "/save-token",
 
