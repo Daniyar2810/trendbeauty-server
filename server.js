@@ -1,232 +1,157 @@
-
-
 import dotenv from "dotenv";
-
 dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
-
 import { createClient } from "@supabase/supabase-js";
+import pkg from "whatsapp-web.js";
+const { Client, LocalAuth } = pkg;
+import qrcode from "qrcode-terminal";
+import axios from "axios";
 
-const serviceAccount =
-  JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT
-  );
-admin.initializeApp({
-  credential:
-    admin.credential.cert(
-      serviceAccount
-    ),
-});
-    const supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY
-    );
 const app = express();
 app.use(cors());
 app.use(express.json());
-/*import pkg from "whatsapp-web.js";
 
-const {
-    Client,
-    LocalAuth
-} = pkg;
-// WHATSAPP CLIENT
+// --- 1. KURULUMLAR (FIREBASE & SUPABASE) ---
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+);
+
+// --- 2. WHATSAPP İSTEMCİSİ ---
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth(), // Oturumu .wwebjs_auth klasöründe saklar
     puppeteer: {
         headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox'
-        ]
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
     }
 });
-// QR
+
 client.on("qr", (qr) => {
-
-    qrcode.generate(qr, {
-        small: true
-    });
-
-    console.log("QR okut 📱");
-
+    console.log("WHATSAPP QR KODU (Telefonuna okut):");
+    qrcode.generate(qr, { small: true });
 });
 
-// READY
 client.on("ready", () => {
-
-    console.log(
-        "WhatsApp hazır ✅"
-    );
-
+    console.log("WhatsApp bağlantısı hazır! ✅");
 });
 
 client.initialize();
 
-app.use(cors());
-app.use(express.json());
+// --- 3. ENDPOINTLER ---
 
-app.post(
-    "/send-whatsapp",
+// A. Token Kaydetme
+app.post("/save-token", async (req, res) => {
+    try {
+        const { token, role } = req.body; // role: 'admin' veya 'customer'
+        const { data, error } = await supabase
+            .from("fcm_tokens")
+            .upsert([{ token, role }], { onConflict: "token" })
+            .select();
 
-    async (req, res) => {
-
-        try {
-
-            const {
-                phone,
-                message
-            } = req.body;
-
-            const formattedPhone =
-                `${phone}@c.us`;
-
-            await client.sendMessage(
-                formattedPhone,
-                message
-            );
-
-            res.json({
-                success: true
-            });
-
-        } catch (err) {
-
-            console.log(err);
-
-            res.status(500).json({
-
-                success: false,
-
-                error: err.message
-
-            });
-
-        }
-
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
     }
-);
-*/
-app.post(
-    "/save-token",
+});
 
-    async (req, res) => {
+// B. Push Bildirim Gönderme (Hata Temizleme Özellikli)
+app.post("/send-push", async (req, res) => {
+    try {
+        const { title, body, targetRole } = req.body;
 
-        try {
+        // DB'den hedef role göre tokenları çek
+        let query = supabase.from("fcm_tokens").select("token");
+        if (targetRole) query = query.eq("role", targetRole);
 
-            console.log("SAVE TOKEN ÇALIŞTI");
-            console.log(process.env.SUPABASE_URL);
-            console.log(process.env.SUPABASE_SERVICE_KEY);
-            console.log(req.body);
+        const { data, error } = await query;
+        if (error) throw error;
 
-            const { token } = req.body;
+        const tokens = data.map(item => item.token);
+        if (tokens.length === 0) return res.json({ success: true, message: "Kayıtlı cihaz yok." });
 
-            const { data, error } =
-                await supabase
-                    .from("fcm_tokens")
-                    .upsert(
-                        [{ token }],
-                        {
-                            onConflict: "token",
-                        }
-                    )
-                    .select();
+        const message = {
+            notification: { title, body },
+            android: { priority: "high" },
+            tokens: tokens
+        };
 
-            console.log("SUPABASE DATA:", data);
-            console.log("SUPABASE ERROR:", error);
+        const response = await admin.messaging().sendEachForMulticast(message);
 
-            if (error) {
-                throw error;
+        // Geçersiz tokenları temizle
+        const expiredTokens = [];
+        response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+                if (resp.error.code === 'messaging/registration-token-not-registered' ||
+                    resp.error.code === 'messaging/invalid-registration-token') {
+                    expiredTokens.push(tokens[idx]);
+                }
             }
+        });
 
-            res.json({
-                success: true,
-            });
-
-        } catch (err) {
-
-            console.log("SAVE TOKEN HATA:");
-            console.log(err);
-
-            res.status(500).json({
-                success: false,
-            });
-
+        if (expiredTokens.length > 0) {
+            await supabase.from("fcm_tokens").delete().in("token", expiredTokens);
+            console.log(`${expiredTokens.length} adet geçersiz token temizlendi.`);
         }
+
+        res.json({ success: true, sentCount: response.successCount });
+    } catch (err) {
+        console.error("Push Hatası:", err);
+        res.status(500).json({ success: false, error: err.message });
     }
-);
-app.post(
-    "/send-push",
+});
 
-    async (req, res) => {
+// C. WhatsApp Mesaj Gönderme
+app.post("/send-whatsapp", async (req, res) => {
+    try {
+        const { phone, message } = req.body;
+        // Telefon numarasını formatla (Örn: 905xxxxxxxxx)
+        const formattedPhone = `${phone.replace(/\D/g, "")}@c.us`;
 
+        await client.sendMessage(formattedPhone, message);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("WhatsApp Hatası:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// D. Sunucuyu Uyanık Tutma (Ping)
+app.get("/ping", (req, res) => res.send("pong 🏓"));
+
+// Render uyku moduna geçmesin diye 5 dakikada bir kendine istek atar
+setInterval(() => {
+    // BURAYI KENDİ RENDER URL'İNLE DEĞİŞTİR
+    axios.get('https://senin-proje-adin.onrender.com/ping')
+        .then(() => console.log("Self-ping: Canlıyım!"))
+        .catch(() => console.log("Self-ping hatası."));
+}, 300000);
+
+// --- 4. SERVER BAŞLAT ---
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+    console.log(`Server ${PORT} portunda çalışıyor...`);
+
+    // --- RENDER CANLI TUTMA (SELF-PING) ---
+    // Sunucu başladıktan sonra her 10 dakikada bir çalışır
+    setInterval(async () => {
         try {
-
-            console.log(req.body);
-
-            const {
-                title,
-                body,
-            } = req.body;
-
-            const { data, error } =
-                await supabase
-                    .from("fcm_tokens")
-                    .select("token");
-
-            if (error) {
-                throw error;
-            }
-
-            const tokens =
-                data.map(
-                    item => item.token
-                );
-
-            console.log("TOKENS:", tokens);
-            const response = await admin.messaging().send({
-
-                token: tokens[0],
-
-                notification: {
-                    title,
-                    body,
-                },
-
-                android: {
-                    priority: "high",
-                    notification: {
-                        sound: "default",
-                    },
-                },
-
-            });
-
-            console.log("SEND RESPONSE:", response);
-
-            console.log(
-                "FCM RESPONSE:",
-                response
-            );
-            res.json({
-                success: true,
-            });
-
+            // NOT: Buradaki URL'nin başına 'https://' koymayı ve 
+            // kendi render adresini doğru yazmayı unutma!
+            const myUrl = "https://senin-proje-adin.onrender.com/ping";
+            await axios.get(myUrl);
+            console.log("Self-ping: Sunucu uyandırıldı! 🚀");
         } catch (err) {
-
-            console.log("PUSH HATA:");
-            console.log(err);
-
-            res.status(500).json({
-                success: false,
-                error: err.message,
-            });
-
+            console.log("Self-ping hatası: Uygulama henüz hazır değil veya URL yanlış.");
         }
-    }
-);
-app.listen(3001, () => {
-  console.log("Server çalışıyor :3001");
+    }, 600000); // 10 dakika (600.000 ms) - 15 dakikadan önce olması yeterli
 });
