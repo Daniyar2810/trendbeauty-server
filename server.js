@@ -1,9 +1,3 @@
-import pkg from "whatsapp-web.js";
-
-const {
-    Client,
-    LocalAuth
-} = pkg;
 
 import qrcode from "qrcode-terminal";
 import dotenv from "dotenv";
@@ -30,6 +24,14 @@ admin.initializeApp({
         process.env.SUPABASE_SERVICE_KEY
     );
 const app = express();
+app.use(cors());
+app.use(express.json());
+import pkg from "whatsapp-web.js";
+
+const {
+    Client,
+    LocalAuth
+} = pkg;
 // WHATSAPP CLIENT
 const client = new Client({
 
@@ -111,6 +113,8 @@ app.post(
         try {
 
             console.log("SAVE TOKEN ÇALIŞTI");
+            console.log(process.env.SUPABASE_URL);
+            console.log(process.env.SUPABASE_SERVICE_KEY);
             console.log(req.body);
 
             const { token } = req.body;
