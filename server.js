@@ -158,60 +158,76 @@ app.post(
     }
 );
 app.post(
-  "/send-push",
+    "/send-push",
 
-  async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-      console.log(
-        req.body
-      );
+            console.log(req.body);
 
-        const {
-            title,
-            body,
-        } = req.body;
+            const {
+                title,
+                body,
+            } = req.body;
 
-        const { data, error } =
-            await supabase
-                .from("fcm_tokens")
-                .select("token");
+            const { data, error } =
+                await supabase
+                    .from("fcm_tokens")
+                    .select("token");
 
-        if (error) {
-            throw error;
-        }
+            if (error) {
+                throw error;
+            }
 
-        const tokens =
-            data.map(
-                item => item.token
+            const tokens =
+                data.map(
+                    item => item.token
+                );
+
+            console.log("TOKENS:", tokens);
+
+            const response = await admin
+                .messaging()
+                .sendEachForMulticast({
+
+                    tokens,
+
+                    notification: {
+                        title,
+                        body,
+                    },
+
+                    android: {
+                        priority: "high",
+                        notification: {
+                            sound: "default"
+                        }
+                    }
+
+                });
+
+            console.log(
+                "FCM RESPONSE:",
+                response
             );
 
-        await admin
-            .messaging()
-            .sendEachForMulticast({
-
-                tokens,
-
-                notification: {
-                    title,
-                    body,
-                },
+            res.json({
+                success: true,
             });
-      res.json({
-        success: true,
-      });
 
-    } catch (err) {
+        } catch (err) {
 
-      console.log(err);
+            console.log("PUSH HATA:");
+            console.log(err);
 
-      res.status(500).json({
-        success: false,
-        error: err.message,
-      });
+            res.status(500).json({
+                success: false,
+                error: err.message,
+            });
+
+        }
     }
-  }
 );
 app.listen(3001, () => {
   console.log("Server çalışıyor :3001");
