@@ -27,10 +27,16 @@ const supabase = createClient(
 
 // --- 2. WHATSAPP İSTEMCİSİ ---
 const client = new Client({
-    authStrategy: new LocalAuth(), // Oturumu .wwebjs_auth klasöründe saklar
+    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        // Render'da npx ile kurulan chrome genelde bu yola gider
+        executablePath: '/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome',
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage'
+        ],
     }
 });
 
