@@ -12,10 +12,9 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
-<<<<<<< HEAD
+
 import { createClient } from "@supabase/supabase-js";
-=======
->>>>>>> 01012862bae41947e5f07b73f8366cbcf662ce7a
+
 const serviceAccount =
   JSON.parse(
     process.env.FIREBASE_SERVICE_ACCOUNT
